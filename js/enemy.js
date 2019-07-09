@@ -1,9 +1,31 @@
 function attackEnemies(hitbox, damage) {
+    let hit = false;
     entities.forEach(entity => {
         if (entity.isEnemy() && entity.isTangible() && entity.hitboxIntersects(hitbox)) {
             entity.takeKnockbackHit(hitbox.knockbackVector(), damage);
+            hit = true;
         }
     })
+    return hit;
+}
+
+function attackNonEnemies(hitbox, damage) {
+    let hit = false;
+    entities.forEach(entity => {
+        if (entity.isHurtByEnemy() && entity.isTangible() && entity.hitboxIntersects(hitbox)) {
+            entity.takeKnockbackHit(hitbox.knockbackVector(), damage);
+            hit = true;
+        }
+    })
+    return hit;
+}
+
+function drawLeftAlignedHealthBar(ctx, x, y, scale, health, maxHealth) {
+    for (let i = 0; i < maxHealth; i+=2) {
+        let img = (health <= 0) ? 2 : (health == 1 ? 1 : 0);
+        health -= 2;
+        ctx.drawImage(image.heart, img * 7, 0, 7, 6, x + 4 * scale * i, y, 7 * scale, 6 * scale);
+    }
 }
 
 class Enemy extends Entity {
@@ -38,13 +60,7 @@ class Enemy extends Entity {
     
     drawHealthBar(y, ctx) {
         if (image.heart) {
-            let left = this.pos.x - 2 * this.maxHealth + 0.5;
-            let renderHealth = this.health;
-            for (let i = 0; i < this.maxHealth; i+=2) {
-                let img = (renderHealth <= 0) ? 2 : (renderHealth == 1 ? 1 : 0);
-                renderHealth -= 2;
-                ctx.drawImage(image.heart, img * 7, 0, 7, 6, left + 4 * i, y + this.pos.y, 7, 6);
-            }
+            drawLeftAlignedHealthBar(ctx, this.pos.x - 2 * this.maxHealth + 0.5, y + this.pos.y, 1, this.health, this.maxHealth);
         }
     }
 }
@@ -66,6 +82,11 @@ class Spider extends Enemy {
         this.v.mult(0.95);
         if (toProperOrigin.mag() < 0.04 && this.v.mag() < 0.5) this.v.mult(0);
         this.pos.add(this.v);
+        if (this.isTangible()) {
+            this.positionHitbox();
+            attackNonEnemies(this.hitbox,1);
+            this.resetHitbox();
+        }
     }
     
     render(ctx) {

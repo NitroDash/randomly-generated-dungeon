@@ -92,7 +92,11 @@ class Entity {
     
     isEnemy() {return false;}
     
+    isHurtByEnemy() {return false;}
+    
     isDead() {return this.dead;}
+    
+    renderHUD(ctx, width, scale) {}
 }
 
 class RoomCollision extends Entity {
@@ -204,7 +208,7 @@ var imageHandPositions = {
 
 class Player extends Entity {
     constructor(x,y) {
-        super(new RectHitbox(-6,-6,6,6),new RectHitbox(-4,-2,4,7),x,y);
+        super(new RectHitbox(-5,-4,5,6),new RectHitbox(-4,-2,4,7),x,y);
         this.slopeRunCounter = 0;
         this.track = null;
         this.tangible = true;
@@ -213,9 +217,27 @@ class Player extends Entity {
         this.weapon = new Sword(this);
         startImageLoad("player");
         startImageLoad("heart");
+        this.maxHealth = 6;
+        this.health = this.maxHealth;
+        this.damageTimer = 0;
     }
     
     update() {
+        if (this.dying) {
+            this.deathTheta += 0.2;
+            if (this.deathTheta < 20.4) {
+                this.direction = new Vector(Math.cos(this.deathTheta), Math.sin(this.deathTheta));
+            } else if (this.deathTheta < 28) {
+                this.direction = new Vector(0,1);
+            } else {
+                this.dead = true;
+                spawnSmokeClouds(this.pos.x,this.pos.y,8);
+            }
+            return;
+        }
+        if (this.damageTimer > 0) {
+            this.damageTimer--;
+        }
         if (this.track) {
             this.track.update();
             this.pos = this.track.getPosition();
@@ -294,16 +316,16 @@ class Player extends Entity {
     render(ctx) {
         if (image.player) {
             let dir = this.angleToImageIndex(this.direction.angleOf());
-            let img = this.standWalk.getStep();
+            let img = this.dying ? (this.deathTheta > 20.4 ? 6 : 0) : this.standWalk.getStep();
             let handLocation = null;
-            if (this.weapon.isActive()) {
+            if (this.weapon.isActive() && !this.dying) {
                 let wImg = this.weapon.getImage();
                 if (wImg >= 0) img = wImg;
                 handLocation = this.pos.plus(imageHandPositions[img][dir]);
                 this.weapon.renderUnderPlayer(ctx, handLocation);
             }
-            ctx.drawImage(image.player,dir * 16, img * 16,16,16,this.pos.x-8,this.pos.y-8,16,16);
-            if (this.weapon.isActive()) {
+            if (this.damageTimer % 20 < 10) ctx.drawImage(image.player,dir * 16, img * 16,16,16,this.pos.x-8,this.pos.y-8,16,16);
+            if (this.weapon.isActive() && !this.dying) {
                 this.weapon.renderAbovePlayer(ctx, handLocation);
             }
             if (DEBUG_SHOW_HITBOX) {
@@ -311,6 +333,25 @@ class Player extends Entity {
                 this.hitbox.render(ctx);
                 this.resetHitbox();
             }
+        }
+    }
+    
+    isHurtByEnemy() {return true;}
+    
+    isTangible() {return this.damageTimer == 0;}
+    
+    renderHUD(ctx, width, scale) {
+        drawLeftAlignedHealthBar(ctx, 0, 0, Math.ceil(2*scale/TILE_SIZE), this.health, this.maxHealth);
+    }
+    
+    takeKnockbackHit(knockback, damage) {
+        this.health -= damage;
+        if (this.health <= 0) {
+            this.dying = true;
+            this.deathTheta = this.direction.angleOf();
+            startCutscene((entity => {return (entity instanceof Particle) || (entity === this);}).bind(this));
+        } else {
+            this.damageTimer = 60;   
         }
     }
 }

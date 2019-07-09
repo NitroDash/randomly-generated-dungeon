@@ -7,7 +7,7 @@ var camera;
 var floor;
 var roomPos = {"x":0,"y":0};
 var roomTransition = {"dx":0,"dy":0,"active":false,"newRoomOpacity":0,"fadedRoom":"new"};
-var doGameLogic = true;
+var normalGameLogic = true;
 
 const ASPECT_RATIO = ROOM_WIDTH/ROOM_HEIGHT;
 
@@ -110,6 +110,15 @@ function checkRoomTransition() {
     }
 }
 
+function startCutscene(allowedUpdates) {
+    canMoveFunction = allowedUpdates;
+    normalGameLogic = false;
+}
+
+function stopCutscene() {
+    normalGameLogic = true;
+}
+
 function startRoomTransition(dx,dy) {
     renderEntities(bgCtx);
     floor[roomPos.x][roomPos.y].unload();
@@ -120,14 +129,14 @@ function startRoomTransition(dx,dy) {
     roomTransition.dx = dx;
     roomTransition.dy = dy;
     roomTransition.active = true;
-    doGameLogic = false;
+    startCutscene(entity => {return false});
     player.translate(-roomTransition.dx * ROOM_PIXEL_WIDTH, -roomTransition.dy * ROOM_PIXEL_HEIGHT);
     camera = new RoomTransitionCamera(dx,dy);
 }
 
 function stopRoomTransition() {
     roomTransition.active = false;
-    doGameLogic = true;
+    stopCutscene();
     bgCtx.drawImage(newRoomCanvas,0,0);
 }
 
@@ -138,18 +147,16 @@ function updateAndRender() {
 }
 
 function update() {
-    if (doGameLogic) {
-        entities.forEach(entity => {
-            entity.update();
-        });
-        for (let i = 0; i < entities.length; i++) {
-            if (entities[i].isDead()) {
-                entities.splice(i,1);
-                i--;
-            }
+    entities.forEach(entity => {
+        if (normalGameLogic || canMoveFunction(entity)) entity.update();
+    });
+    for (let i = 0; i < entities.length; i++) {
+        if (entities[i].isDead()) {
+            entities.splice(i,1);
+            i--;
         }
-        checkRoomTransition();   
     }
+    if (normalGameLogic) checkRoomTransition();
     camera.update();
     camera = camera.nextCamera();
     for (let i = 0; i < keys.length; i++) {
@@ -196,6 +203,10 @@ function render() {
     renderEntities(ctx);
     
     ctx.setTransform(1,0,0,1,0,0);
+    
+    entities.forEach(entity => {
+        entity.renderHUD(ctx, canvas.width, screenTileWidth);
+    })
 }
 
 function renderEntities(ctx) {
