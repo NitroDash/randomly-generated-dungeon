@@ -1,7 +1,7 @@
 var canvas, ctx;
 var bgCanvas, bgCtx;
 var newRoomCanvas, newRoomCtx;
-var keys=[keyboard(87),keyboard(83),keyboard(65),keyboard(68)];
+var keys=[keyboard(87),keyboard(83),keyboard(65),keyboard(68),keyboard(16)];
 var m = mouse();
 var camera;
 var floor;
@@ -12,6 +12,7 @@ var normalGameLogic = true;
 const ASPECT_RATIO = ROOM_WIDTH/ROOM_HEIGHT;
 
 const DEBUG_SHOW_HITBOX = false;
+const DEBUG_ENABLE_NOCLIP = false;
 
 var image = {};
 

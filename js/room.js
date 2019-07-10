@@ -232,21 +232,6 @@ function _generateFloor(level, res, callback) {
                         break;
                 }
             }
-            /*if (height[x][y].up) {
-                floor[x][y].array[9][1] = "wall";
-            }
-            if (height[x][y].down) {
-                floor[x][y].array[9][9] = "wall";
-            }
-            if (height[x][y].left) {
-                floor[x][y].array[1][5] = "wall";
-            }
-            if (height[x][y].right) {
-                floor[x][y].array[17][5] = "wall";
-            }
-            if (height[x][y].stairs) {
-                floor[x][y].array[9][5] = "wall";
-            }*/
         }
     }
     callback();

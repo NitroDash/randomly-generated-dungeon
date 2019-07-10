@@ -260,7 +260,7 @@ class Player extends Entity {
             this.weapon.activate(pixelToGame(m.x,m.y).minus(this.pos));
         } else {
             let d = new Vector(0,0);
-            let speed = 1;
+            let speed = (DEBUG_ENABLE_NOCLIP && keys[4].isDown) ? 3 : 1;
             if (keys[0].isDown) {
                 d.y--;
             }
@@ -283,7 +283,7 @@ class Player extends Entity {
             this.pos.add(d);
         }
         let oldSlopeCounter = this.slopeRunCounter;
-        this.ejectFromCollision();
+        if (DEBUG_ENABLE_NOCLIP && !keys[4].isDown) this.ejectFromCollision();
         if (this.slopeRunCounter == oldSlopeCounter) this.slopeRunCounter = 0;
     }
     
@@ -339,7 +339,7 @@ class Player extends Entity {
     
     isHurtByEnemy() {return true;}
     
-    isTangible() {return this.damageTimer == 0;}
+    isTangible() {return this.tangible && this.damageTimer == 0;}
     
     renderHUD(ctx, width, scale) {
         drawLeftAlignedHealthBar(ctx, 0, 0, Math.ceil(2*scale/TILE_SIZE), this.health, this.maxHealth);
@@ -393,6 +393,11 @@ class SpringPanel extends Entity {
         if (image.springpanel) {
             ctx.drawImage(image.springpanel,14,0,4,14,this.pos.x-2,this.pos.y-7,4,14);
             ctx.drawImage(image.springpanel,0,0,14,14,this.pos.x - 7, this.pos.y - 7 - ((this.bounceTheta == 0) ? 0 : (3+Math.sin(this.bounceTheta))),14,14);
+            if (DEBUG_SHOW_HITBOX) {
+                this.positionHitbox();
+                this.hitbox.render(ctx);
+                this.resetHitbox();
+            }
         }
     }
     

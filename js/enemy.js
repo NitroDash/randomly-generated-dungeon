@@ -21,6 +21,7 @@ function attackNonEnemies(hitbox, damage) {
 }
 
 function drawLeftAlignedHealthBar(ctx, x, y, scale, health, maxHealth) {
+    if (!image.heart) return;
     for (let i = 0; i < maxHealth; i+=2) {
         let img = (health <= 0) ? 2 : (health == 1 ? 1 : 0);
         health -= 2;
