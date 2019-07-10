@@ -20,6 +20,8 @@ const fontLoc = "abcdefghijklmnopqrstuvwxyz0123456789.,!?;:-'() ";
 var player;
 var entities = [];
 
+var menu;
+
 function loadJSON(filename,callback) {   
     var xobj = new XMLHttpRequest();
     xobj.overrideMimeType("application/json");
@@ -87,12 +89,18 @@ function init() {
     newRoomCtx = newRoomCanvas.getContext("2d");
     newRoomCtx.imageSmoothingEnabled = false;
     
-    camera = new RoomCenterCamera();
+    startImageLoad("font");
+    setupNewGame();
     
+    generateFloor(0,initFloorAndStartGame);
+}
+
+function setupNewGame() {
+    menu = null;
+    camera = new RoomCenterCamera();
+    entities = [];
     player = new Player(HALF_ROOM_PIXEL_WIDTH,HALF_ROOM_PIXEL_HEIGHT);
     entities.push(player);
-    
-    loadImage("img/font.png",function() {generateFloor(0,initFloorAndStartGame)});
 }
 
 function initFloor() {
@@ -108,6 +116,10 @@ function checkRoomTransition() {
     if (player.isTangible() && !player.hitboxIntersects(roomBox)) {
         startRoomTransition(Math.round(player.pos.x/HALF_ROOM_PIXEL_WIDTH)-1,Math.round(player.pos.y/HALF_ROOM_PIXEL_HEIGHT)-1);
     }
+}
+
+function openMenu(menuID) {
+    menu = makeMenu(menuID);
 }
 
 function startCutscene(allowedUpdates) {
@@ -157,6 +169,7 @@ function update() {
         }
     }
     if (normalGameLogic) checkRoomTransition();
+    if (menu) menu.update();
     camera.update();
     camera = camera.nextCamera();
     for (let i = 0; i < keys.length; i++) {
@@ -202,6 +215,8 @@ function render() {
     
     renderEntities(ctx);
     
+    if (menu) menu.render(ctx);
+    
     ctx.setTransform(1,0,0,1,0,0);
     
     entities.forEach(entity => {
@@ -229,7 +244,7 @@ function drawString(ctx,text,x,y,align,size,shake) {
                 break;
         }
         for (let j = 0; j < text[k].length; j++) {
-            ctx.drawImage(i.font,fontLoc.indexOf(text[k].charAt(j))*5,0,4.99,5,drawX+Math.random()*shake*2-shake,drawY+Math.random()*shake*2-shake,5*size,5*size);
+            ctx.drawImage(image.font,fontLoc.indexOf(text[k].charAt(j))*5,0,4.99,5,drawX+Math.random()*shake*2-shake,drawY+Math.random()*shake*2-shake,5*size,5*size);
             drawX+=5*size;
         }
         drawY -= 6*size;

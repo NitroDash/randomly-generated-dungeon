@@ -175,7 +175,7 @@ class PointHitbox extends Hitbox {
     render(ctx) {
         ctx.fillStyle = "#f00";
         ctx.globalAlpha = 0.5;
-        ctx.fillRect(this.pos.x-3,this.pos.y-3,6,6);
+        ctx.fillRect(this.pos.x-1,this.pos.y-1,2,2);
         ctx.globalAlpha = 1;
     }
 }

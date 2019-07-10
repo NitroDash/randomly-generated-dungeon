@@ -232,6 +232,7 @@ class Player extends Entity {
             } else {
                 this.dead = true;
                 spawnSmokeClouds(this.pos.x,this.pos.y,8);
+                openMenu("gameOver");
             }
             return;
         }

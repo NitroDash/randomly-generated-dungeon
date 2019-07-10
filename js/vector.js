@@ -94,7 +94,7 @@ class Vector {
     }
 }
 
-class Rectangle {
+/*class Rectangle {
     constructor(x,y,w,h) {
         this.x = x;
         this.y = y;
@@ -126,4 +126,4 @@ class Rectangle {
         let vert = (centerDist.y > 0) ? (this.y + this.h) - other.y : this.y - (other.y + other.h);
         return (Math.abs(horiz) > Math.abs(vert)) ? new Vector(0,vert) : new Vector(horiz,0);
     }
-}
+}*/

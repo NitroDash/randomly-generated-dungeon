@@ -58,6 +58,7 @@ class Sword extends Weapon {
         startImageLoad("sword");
         this.direction = null;
         this.timer = 0;
+        this.handLocationCache = null;
     }
     
     activate(direction) {
@@ -77,8 +78,9 @@ class Sword extends Weapon {
             let cos = Math.cos(theta);
             let sin = Math.sin(theta);
             let boxes = [];
+            let origin = this.handLocationCache || this.user.pos;
             for (let i = 4; i <= 16; i++) {
-                boxes.push(new PointHitbox(this.user.pos.x + cos * i, this.user.pos.y + sin * i, theta))
+                boxes.push(new PointHitbox(origin.x + cos * i, origin.y + sin * i, theta))
             }
             return new HitboxCollection(boxes);
         } else {
@@ -110,6 +112,7 @@ class Sword extends Weapon {
     
     render(ctx, handLocation) {
         if (image.sword && this.isActive()) {
+            this.handLocationCache = handLocation;
             let theta = this.direction.angleOf();
             ctx.translate(handLocation.x,handLocation.y);
             ctx.rotate(theta);
