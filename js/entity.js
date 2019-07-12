@@ -256,23 +256,11 @@ class Player extends Entity {
             if (v) this.direction = v.copy();
             let box = this.weapon.getHitbox();
             attackEnemies(box, this.weapon.getDamage());
-        } else if (m.clicked[0]) {
-            this.weapon.activate(pixelToGame(m.x,m.y).minus(this.pos));
+        } else if (newClicks.length > 0) {
+            this.weapon.activate(pixelToGame(newClicks[0].x,newClicks[0].y).minus(this.pos));
         } else {
-            let d = new Vector(0,0);
             let speed = (DEBUG_ENABLE_NOCLIP && keys[4].isDown) ? 3 : 1;
-            if (keys[0].isDown) {
-                d.y--;
-            }
-            if (keys[1].isDown) {
-                d.y++;
-            }
-            if (keys[2].isDown) {
-                d.x--;
-            }
-            if (keys[3].isDown) {
-                d.x++;
-            }
+            let d = movementDir.copy();
             if (d.magSquared() != 0) {
                 d.setLength(speed);
                 this.direction = d;
@@ -283,7 +271,7 @@ class Player extends Entity {
             this.pos.add(d);
         }
         let oldSlopeCounter = this.slopeRunCounter;
-        if (DEBUG_ENABLE_NOCLIP && !keys[4].isDown) this.ejectFromCollision();
+        if (!DEBUG_ENABLE_NOCLIP || !keys[4].isDown) this.ejectFromCollision();
         if (this.slopeRunCounter == oldSlopeCounter) this.slopeRunCounter = 0;
     }
     

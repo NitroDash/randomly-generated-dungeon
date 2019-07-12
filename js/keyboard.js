@@ -95,3 +95,55 @@ function mouse() {
     window.addEventListener("contextmenu", event => event.preventDefault(), false);
     return m;
 }
+
+function touch(canvas) {
+    var t = {};
+    t.touches = [];
+    
+    t.touch = function(evt) {
+        evt.preventDefault();
+        touchMode = true;
+        for (let i = 0; i < evt.changedTouches.length; i++) {
+            let newTouch = evt.changedTouches.item(i);
+            this.touches.push({id: newTouch.identifier, x: newTouch.clientX, y: newTouch.clientY, isNew: true});
+        }
+    }
+    
+    t.move = function(evt) {
+        evt.preventDefault();
+        for (let j = 0; j < evt.changedTouches.length; j++) {
+            let newTouch = evt.changedTouches.item(j);
+            for (let i = 0; i < this.touches.length; i++) {
+                if (this.touches[i].id == newTouch.identifier) {
+                    this.touches[i].x = newTouch.clientX;
+                    this.touches[i].y = newTouch.clientY;
+                    break;
+                }
+            }
+        }
+    }
+    
+    t.end = function(evt) {
+        evt.preventDefault();
+        for (let j = 0; j < evt.changedTouches.length; j++) {
+            let endTouch = evt.changedTouches.item(j);
+            for (let i = 0; i < this.touches.length; i++) {
+                if (this.touches[i].id == endTouch.identifier) {
+                    this.touches.splice(i,1);
+                    break;
+                }
+            }
+        }
+    }
+    
+    canvas.addEventListener("touchstart", t.touch.bind(t), false);
+    canvas.addEventListener("touchmove", t.move.bind(t), false);
+    canvas.addEventListener("touchend", t.end.bind(t), false);
+    canvas.addEventListener("touchcancel", t.end.bind(t), false);
+    
+    return t;
+}
+
+var newClicks = [];
+var movementDir = null;
+var touchMode = false;

@@ -3,6 +3,7 @@ var bgCanvas, bgCtx;
 var newRoomCanvas, newRoomCtx;
 var keys=[keyboard(87),keyboard(83),keyboard(65),keyboard(68),keyboard(16)];
 var m = mouse();
+var t;
 var camera;
 var floor;
 var roomPos = {"x":0,"y":0};
@@ -76,6 +77,7 @@ function loadFiles(loads, callback) {
 
 function init() {
     canvas = document.getElementById("canvas");
+    t = touch(canvas);
     ctx = canvas.getContext("2d");
     
     bgCanvas = document.createElement("canvas");
@@ -160,6 +162,34 @@ function updateAndRender() {
 }
 
 function update() {
+    newClicks = [];
+    if (m.clicked[0]) newClicks.push(new Vector(m.x,m.y));
+    t.touches.forEach(tap => {
+        if (tap.isNew) {
+            tap.isNew = false;
+            newClicks.push(new Vector(tap.x,tap.y));
+        }
+    })
+    movementDir = new Vector(0,0);
+    if (touchMode) {
+        
+    } else {
+        if (keys[0].isDown) {
+            movementDir.y--;
+        }
+        if (keys[1].isDown) {
+            movementDir.y++;
+        }
+        if (keys[2].isDown) {
+            movementDir.x--;
+        }
+        if (keys[3].isDown) {
+            movementDir.x++;
+        }
+        if (movementDir.magSquared() != 0) {
+            movementDir.unitize();
+        }   
+    }
     entities.forEach(entity => {
         if (normalGameLogic || canMoveFunction(entity)) entity.update();
     });
