@@ -248,9 +248,10 @@ class Player extends Entity {
             }
             return;
         }
+        let v;
         if (this.weapon.isActive()) {
             this.weapon.update();
-            let v = this.weapon.getVelocity();
+            v = this.weapon.getVelocity();
             if (v) this.pos.add(v);
             v = this.weapon.getDirection();
             if (v) this.direction = v.copy();
@@ -258,6 +259,8 @@ class Player extends Entity {
             attackEnemies(box, this.weapon.getDamage());
         } else if (newClicks.length > 0) {
             this.weapon.activate(pixelToGame(newClicks[0].x,newClicks[0].y).minus(this.pos));
+        } else if (touchMode && (v = joysticks[1].getInput()) && v.mag() > 0.3) {
+            this.weapon.activate(v);
         } else {
             let speed = (DEBUG_ENABLE_NOCLIP && keys[4].isDown) ? 3 : 1;
             let d = movementDir.copy();

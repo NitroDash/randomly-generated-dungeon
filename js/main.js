@@ -92,6 +92,7 @@ function init() {
     newRoomCtx = newRoomCanvas.getContext("2d");
     newRoomCtx.imageSmoothingEnabled = false;
     
+    joysticks  = [new TouchJoystick(true, false, 0.1, "touchcircle"), new TouchJoystick(false, false, 0.1, "weaponcircle")];
     startImageLoad("font");
     setupNewGame();
     
@@ -164,6 +165,9 @@ function updateAndRender() {
 function update() {
     newClicks = [];
     if (m.clicked[0]) newClicks.push(new Vector(m.x,m.y));
+    joysticks.forEach(stick => {
+        stick.update();
+    })
     t.touches.forEach(tap => {
         if (tap.isNew) {
             tap.isNew = false;
@@ -172,7 +176,8 @@ function update() {
     })
     movementDir = new Vector(0,0);
     if (touchMode) {
-        
+        let v = joysticks[0].getInput();
+        if (v) movementDir = v;
     } else {
         if (keys[0].isDown) {
             movementDir.y--;
@@ -253,6 +258,10 @@ function render() {
     entities.forEach(entity => {
         entity.renderHUD(ctx, canvas.width, screenTileWidth);
     })
+    
+    if (touchMode) {
+        joysticks.forEach(stick => {stick.render(ctx)});
+    }
 }
 
 function renderEntities(ctx) {

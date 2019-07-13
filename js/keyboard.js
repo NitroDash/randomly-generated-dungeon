@@ -100,9 +100,17 @@ function touch(canvas) {
     var t = {};
     t.touches = [];
     
+    t.getIdIndex = function(id) {
+        for (let i = 0; i < t.touches.length; i++) {
+            if (t.touches[i].id == id) return i;
+        }
+        return -1;
+    }
+    
     t.touch = function(evt) {
         evt.preventDefault();
         touchMode = true;
+        startImageLoad("touchcircle");
         for (let i = 0; i < evt.changedTouches.length; i++) {
             let newTouch = evt.changedTouches.item(i);
             this.touches.push({id: newTouch.identifier, x: newTouch.clientX, y: newTouch.clientY, isNew: true});
@@ -147,3 +155,69 @@ function touch(canvas) {
 var newClicks = [];
 var movementDir = null;
 var touchMode = false;
+
+class TouchJoystick {
+    constructor(isLeft, isTop, size, imageId) {
+        this.isLeft = isLeft;
+        this.isTop = isTop;
+        this.rad = size;
+        this.imageId = imageId;
+        this.touchId = null;
+        startImageLoad(imageId);
+    }
+    
+    update() {
+        if (t.getIdIndex(this.touchId) < 0) {
+            for (let i = 0; i < t.touches.length; i++) {
+                if (t.touches[i].isNew && this.contains(new Vector(t.touches[i].x,t.touches[i].y))) {
+                    this.touchId = t.touches[i].id;
+                    t.touches[i].isNew = false;
+                    break;
+                }
+            }
+            if (t.getIdIndex(this.touchId) < 0) {
+                this.touchId = null;
+            }
+        }
+    }
+    
+    getX() {
+        return this.isLeft ? this.getRadius() : canvas.width - this.getRadius();
+    }
+    
+    getY() {
+        return this.isTop ? this.getRadius() : canvas.height - this.getRadius();
+    }
+    
+    getPos() {
+        return new Vector(this.getX(), this.getY());
+    }
+    
+    getRadius() {
+        return Math.max(canvas.width, canvas.height) * this.rad;
+    }
+    
+    getInput() {
+        if (t.getIdIndex(this.touchId) >= 0) {
+            let touchLoc = t.touches[t.getIdIndex(this.touchId)];
+            let v = (new Vector(touchLoc.x,touchLoc.y)).minus(this.getPos());
+            v.mult(1/this.getRadius());
+            return v;
+        }
+        return null;
+    }
+    
+    contains(pt) {
+        return this.getPos().minus(pt).mag() <= this.getRadius();
+    }
+    
+    render(ctx) {
+        if (image[this.imageId]) {
+            ctx.globalAlpha = 0.7;
+            ctx.drawImage(image[this.imageId], this.getX() - this.getRadius(), this.getY() - this.getRadius(), this.getRadius() * 2, this. getRadius() * 2);
+            ctx.globalAlpha = 1;
+        }
+    }
+}
+
+var joysticks;
