@@ -406,16 +406,26 @@ class DungeonGraph {
         while (roomsReached < roomsInDungeon) {
             let stairRoom = null;
             if (testStack.length == 0) {
-                stairRoom = needStairRooms.pop();
-                height[stairRoom.x][stairRoom.y].stairs = 1;
-                reached[stairRoom.x][stairRoom.y] = 0;
-                roomsReached--;
-                testStack.push({"x":stairRoom.x,"y":stairRoom.y,"h":0});
+                while (!stairRoom) {
+                    stairRoom = needStairRooms.pop();
+                    if (reached[stairRoom.x][stairRoom.y] == 2) {
+                        stairRoom = null;
+                    } else {
+                        height[stairRoom.x][stairRoom.y].stairs = 1;
+                        reached[stairRoom.x][stairRoom.y] = 0;
+                        testStack.push({"x":stairRoom.x,"y":stairRoom.y,"h":0});
+                    }
+                }
             }
             while (testStack.length > 0) {
                 let test = testStack.pop();
                 if (reached[test.x][test.y] >= test.h + 1) continue;
-                if (!reached[test.x][test.y]) roomsReached++;
+                if (height[test.x][test.y].stairs) {
+                    test.h = 1;
+                } else {
+                    needStairRooms.push({"x":test.x,"y":test.y});
+                }
+                if (reached[test.x][test.y] < 2 && test.h == 1) roomsReached++;
                 reached[test.x][test.y] = test.h + 1;
                 for (var dir in oppositeDirections) {
                     if (oppositeDirections.hasOwnProperty(dir)) {
@@ -430,7 +440,7 @@ class DungeonGraph {
                     }
                 }
             }
-            if (oldRoomsReached == roomsReached) {
+            if (oldRoomsReached == roomsReached && stairRoom) {
                 height[stairRoom.x][stairRoom.y].stairs = 0;
             }
             oldRoomsReached = roomsReached;
@@ -472,7 +482,7 @@ class DungeonGraph {
                     }
                 }
             }
-        }
+        }        
         return height;
     }
 }

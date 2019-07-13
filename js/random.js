@@ -1,17 +1,17 @@
 function randomChance(p) {
-    return Math.random() < p;
+    return random() < p;
 }
 
 function randInt(min, max) {
-    return Math.floor((max - min) * Math.random()) + min;
+    return Math.floor((max - min) * random()) + min;
 }
 
 function randFloat(min, max) {
-    return (max - min) * Math.random() + min;
+    return (max - min) * random() + min;
 }
 
 function permute(list) {
-    list.sort(function(a,b) {return Math.random()-0.5});
+    list.sort(function(a,b) {return random()-0.5});
 }
 
 function sampleNoReplace(list) {
@@ -20,4 +20,16 @@ function sampleNoReplace(list) {
     list[i] = list[list.length-1];
     list.pop();
     return temp;
+}
+
+var seed;
+
+function random() {
+    if (DEBUG_RNG_SEED) {
+        if (seed == undefined) seed = DEBUG_RNG_SEED;
+        seed = (seed * 674829 + 587134) % 1048576;
+        return seed/1048576;
+    } else {
+        return Math.random();
+    }
 }

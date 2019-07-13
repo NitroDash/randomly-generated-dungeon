@@ -14,6 +14,7 @@ const ASPECT_RATIO = ROOM_WIDTH/ROOM_HEIGHT;
 
 const DEBUG_SHOW_HITBOX = false;
 const DEBUG_ENABLE_NOCLIP = false;
+const DEBUG_RNG_SEED = null;
 
 var image = {};
 
