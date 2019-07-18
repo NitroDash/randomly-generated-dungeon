@@ -97,6 +97,10 @@ class Entity {
     isDead() {return this.dead;}
     
     renderHUD(ctx, width, scale) {}
+    
+    canCollect(drop) {return false;}
+    
+    collect(drop) {}
 }
 
 class RoomCollision extends Entity {
@@ -200,6 +204,124 @@ class TileCollision {
     }
 }
 
+class SolidEntity extends Entity {
+    constructor(wallbox, hitbox, x, y) {
+        super(wallbox, hitbox, x, y);
+        this.segments = [];
+    }
+    
+    getCollidingSegments(other) {
+        let result = [];
+        for (let i = 0; i < this.segments.length; i++) {
+            let v = other.getEjected(this.segments[i].hitbox);
+            if (v) {
+                result.push(this.segments[i]);
+            }
+        }
+        return result;
+    }
+}
+
+class SolidRectWallboxEntity extends SolidEntity {
+    constructor(x,y,w,h,hitbox) {
+        super(new RectHitbox(x - w/2, y - h/2, x + w/2, y + h/2), hitbox, x, y);
+        this.segments.push({"hitbox": new HorizontalLineHitbox(this.wallbox.p1.x,this.wallbox.p2.x,this.wallbox.p2.y,false), type: "wall"});
+        this.segments.push({"hitbox": new HorizontalLineHitbox(this.wallbox.p1.x,this.wallbox.p2.x,this.wallbox.p1.y,true), type: "wall"});
+        this.segments.push({"hitbox": new VerticalLineHitbox(this.wallbox.p1.x,this.wallbox.p1.y,this.wallbox.p2.y,true), type: "wall"});
+        this.segments.push({"hitbox": new VerticalLineHitbox(this.wallbox.p2.x,this.wallbox.p1.y,this.wallbox.p2.y,false), type: "wall"});
+    }
+}
+
+class BossDoor extends SolidRectWallboxEntity {
+    constructor() {
+        super(ROOM_PIXEL_WIDTH/2, 8, 24, 16, new RectHitbox(-12,0,12,20));
+        startImageLoad("bossdoor");
+    }
+    
+    update() {
+        this.positionHitbox();
+        entities.forEach(entity => {
+            if (entity.keys && entity.hitboxIntersects(this.hitbox)) {
+                entity.keys--;
+                this.dead = true;
+                spawnSmokeClouds(this.pos.x - 6, this.pos.y + 8, 8);
+                spawnSmokeClouds(this.pos.x + 6, this.pos.y + 8, 8);
+            }
+        })
+        this.resetHitbox();
+    }
+    
+    render(ctx) {
+        if (image.bossdoor) {
+            ctx.drawImage(image.bossdoor, this.wallbox.p1.x,this.wallbox.p1.y);
+        }
+    }
+}
+
+class Chest extends SolidRectWallboxEntity {
+    constructor(x,y,contents) {
+        super(x,y,12,12,new RectHitbox(-8, -8, 8, 8));
+        startImageLoad("chest");
+        this.tangible = true;
+        this.contents = contents;
+    }
+    
+    isEnemy() {
+        return true;
+    }
+    
+    takeKnockbackHit(knockback, damage) {
+        this.dead = true;
+        spawnSmokeClouds(this.pos.x,this.pos.y,8);
+        let drop = null;
+        switch (this.contents) {
+            case "key":
+                drop = new KeyDrop(this.pos.x, this.pos.y);
+                break;
+        }
+        if (drop) {
+            entities.push(drop);
+            floor[roomPos.x][roomPos.y].adopt(drop);
+        }
+    }
+    
+    render(ctx) {
+        if (image.chest) {
+            ctx.drawImage(image.chest, this.wallbox.p1.x,this.wallbox.p1.y);
+        }
+    }
+}
+
+class Drop extends Entity {
+    constructor(hitbox, x, y) {
+        super(null, hitbox, x, y);
+    }
+    
+    update() {
+        this.positionHitbox();
+        entities.forEach(en => {
+            if (en.canCollect(this) && en.hitboxIntersects(this.hitbox)) {
+                this.dead = true;
+                en.collect(this);
+            }
+        })
+        this.resetHitbox();
+    }
+}
+
+class KeyDrop extends Drop {
+    constructor(x,y) {
+        super(new RectHitbox(-2, -4, 2, 4), x, y);
+        startImageLoad("key");
+    }
+    
+    render(ctx) {
+        if (image.key) {
+            ctx.drawImage(image.key, this.pos.x - 2.5, this.pos.y - 4.5);
+        }
+    }
+}
+
 var imageHandPositions = {
     5:[
         new Vector(-1.5,3.5), new Vector(0.5,2.5), new Vector(3.5,2.5), new Vector(4.5,1.5), new Vector(3.5,-0.5), new Vector(-1.5,-0.5), new Vector(-3.5,2.5), new Vector(-5.5,2.5)
@@ -220,6 +342,7 @@ class Player extends Entity {
         this.maxHealth = 6;
         this.health = this.maxHealth;
         this.damageTimer = 0;
+        this.keys = 0;
     }
     
     update() {
@@ -334,6 +457,13 @@ class Player extends Entity {
     
     renderHUD(ctx, width, scale) {
         drawLeftAlignedHealthBar(ctx, 0, 0, Math.ceil(2*scale/TILE_SIZE), this.health, this.maxHealth);
+        if (image.key) {
+            let keyX = width;
+            for (let i = 0; i < this.keys; i++) {
+                keyX -= scale * 5/9;
+                ctx.drawImage(image.key, 0, 0, 5, 9, keyX, 0, scale * 5/9, scale);
+            }
+        }
     }
     
     takeKnockbackHit(knockback, damage) {
@@ -344,6 +474,17 @@ class Player extends Entity {
             startCutscene((entity => {return (entity instanceof Particle) || (entity === this);}).bind(this));
         } else {
             this.damageTimer = 60;   
+        }
+    }
+    
+    canCollect(drop) {
+        return true;
+    }
+    
+    collect(drop) {
+        if (drop instanceof KeyDrop) {
+            startImageLoad("key");
+            this.keys++;
         }
     }
 }

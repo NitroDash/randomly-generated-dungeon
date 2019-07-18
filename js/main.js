@@ -175,6 +175,7 @@ function update() {
             newClicks.push(new Vector(tap.x,tap.y));
         }
     })
+    if (menu) menu.update();
     movementDir = new Vector(0,0);
     if (touchMode) {
         let v = joysticks[0].getInput();
@@ -206,7 +207,6 @@ function update() {
         }
     }
     if (normalGameLogic) checkRoomTransition();
-    if (menu) menu.update();
     camera.update();
     camera = camera.nextCamera();
     for (let i = 0; i < keys.length; i++) {

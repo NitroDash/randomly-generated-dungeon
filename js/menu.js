@@ -22,13 +22,13 @@ class Menu {
     }
     
     update() {
-        if (m.clicked[0]) {
-            let loc = pixelToGame(m.x,m.y);
+        newClicks.forEach(click => {
+            let loc = pixelToGame(click.x,click.y);
             let hit = new PointHitbox(loc.x, loc.y, 0);
             this.elements.forEach(el => {
                 if (el.box && el.box.intersectsPoint(hit)) el.onClick();
             });
-        }
+        })
     }
     
     render(ctx) {

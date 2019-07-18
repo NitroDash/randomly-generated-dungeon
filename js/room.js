@@ -70,6 +70,18 @@ class Room {
         }
     }
     
+    addEntity(template) {
+        this.entityList.push(template);
+    }
+    
+    adopt(entity) {
+        this.entityList.push({template: {type: "thing"}, alive: !entity.isDead(), thing: entity});
+    }
+    
+    addChest(contents) {
+        this.addEntity({template: {type: "chest", x: ROOM_PIXEL_WIDTH/2, y: ROOM_PIXEL_HEIGHT/2, "contents": contents}, alive: true});
+    }
+    
     load(ctx) {
         this.makeTiles();
         entities.push(this.collision);
@@ -82,6 +94,12 @@ class Room {
                             break;
                         case "spider":
                             entry.thing = new Spider(entry.template.x,entry.template.y);
+                            break;
+                        case "bossdoor":
+                            entry.thing = new BossDoor();
+                            break;
+                        case "chest":
+                            entry.thing = new Chest(entry.template.x, entry.template.y, entry.template.contents);
                             break;
                     }
                     if (entry.thing) {
@@ -100,7 +118,7 @@ class Room {
             if (entry.thing && entry.thing.isDead()) {
                 entry.alive = false;
             }
-            entry.thing = null;
+            if (entry.template.type != "thing") entry.thing = null;
         })
     }
 }
@@ -186,8 +204,8 @@ function _generateFloor(level, res, callback) {
     if (!templates) templates = res[2];
     image.tiles = res[0];
     tilemap = res[1];
-    let DUNGEON_WIDTH = 6;
-    let DUNGEON_HEIGHT = 7;
+    let DUNGEON_WIDTH = 4;
+    let DUNGEON_HEIGHT = 5;
     roomPos.x = randInt(0,DUNGEON_WIDTH);
     roomPos.y = DUNGEON_HEIGHT-1;
     let graph = new DungeonGraph(DUNGEON_WIDTH,DUNGEON_HEIGHT);
@@ -199,6 +217,13 @@ function _generateFloor(level, res, callback) {
     graph.cleanDuplicateEdges();
     graph.makeBidirectional();
     let height = graph.makeHeights(roomPos.x,roomPos.y);
+    let bossPos = {x: 0, y: 0};
+    for (let x = 0; x < DUNGEON_WIDTH; x++) {
+        if (graph.containsRoomExit(graph.graph[x][1],x,0)) {
+            bossPos.x = x;
+            break;
+        }
+    }
     floor = makeEmptyArray(DUNGEON_WIDTH,DUNGEON_HEIGHT,null);
     for (let x = 0; x < DUNGEON_WIDTH; x++) {
         for (let y = 0; y < DUNGEON_HEIGHT; y++ ){
@@ -210,6 +235,13 @@ function _generateFloor(level, res, callback) {
             floor[x][y] = new Room(templates[templateString][0]);
         }
     }
+    floor[bossPos.x][bossPos.y+1].addEntity({template: {type: "bossdoor"}, alive: true});
+    let numChests = 1;
+    let chestPos = graph.findChestPositions(numChests, function(x,y) {return y > 0 && (x != roomPos.x || y != roomPos.y)});
+    let chestContents = ["key"];
+    chestPos.forEach(pos => {
+        floor[pos.x][pos.y].addChest(chestContents.shift());
+    })
     for (let x = 0; x < graph.graph.length; x++) {
         for (let y = 0; y < graph.graph[x].length; y++) {
             for (let i = 0; i < graph.graph[x][y].length; i++) {
@@ -484,5 +516,25 @@ class DungeonGraph {
             }
         }        
         return height;
+    }
+    
+    findChestPositions(num, isAllowed) {
+        let found = [];
+        for (let x = 0; x < this.graph.length; x++) {
+            for (let y = 0; y < this.graph[0].length; y++) {
+                if (isAllowed(x,y)) {
+                    let score = this.graph[x][y].length + random();
+                    for (let i = 0; i <= found.length; i++) {
+                        if (i == found.length) {
+                            if (found.length < num) found.push({"x":x,"y":y,"score":score});
+                        } else if (found[i].score > score) {
+                            found.splice(i,0,{"x":x,"y":y,"score":score});
+                            if (found.length > num) found.pop();
+                        }
+                    }
+                }
+            }
+        }
+        return found;
     }
 }
