@@ -40,3 +40,26 @@ function spawnSmokeClouds(x,y,num) {
         entities.push(new SmokeCloud(x+4*Math.cos(theta),y+4*Math.sin(theta)));
     }
 }
+
+class SleepZ extends Particle {
+    constructor(x,y,right) {
+        super(x,y);
+        this.v = new Vector(right ? 0.1 : -0.1, -0.2);
+        this.timer = 0;
+        startImageLoad("z");
+    }
+    
+    update() {
+        this.pos.add(this.v);
+        this.timer++;
+        if (this.timer > 80) {
+            this.dead = true;
+        }
+    }
+    
+    render(ctx) {
+        if (image.z) {
+            ctx.drawImage(image.z, this.pos.x - 1.5, this.pos.y - 2.5);
+        }
+    }
+}

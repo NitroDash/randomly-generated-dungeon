@@ -50,7 +50,7 @@ class Enemy extends Entity {
     
     takeKnockbackHit(knockback, damage) {
         this.health -= damage;
-        this.damageTimer = 3;
+        this.damageTimer = 10;
         if (this.health <= 0) this.die();
     }
     
@@ -120,5 +120,96 @@ class Spider extends Enemy {
     takeKnockbackHit(knockback, damage) {
         if (knockback) this.v = knockback.times(2);
         super.takeKnockbackHit(knockback, damage);
+    }
+}
+
+class Snake extends Enemy {
+    constructor(x,y) {
+        super(new RectHitbox(-5,-5,5,0),new HitboxCollection([new RectHitbox(-5,-3,5,0),new RectHitbox(2,-9,6,0)]),x,y,2);
+        startImageLoad("snake");
+        startImageLoad("z");
+        this.alert = 0;
+        this.sleepTimer = 0;
+        this.animation = new StandWalkAnimation(3,4);
+        this.direction = true;
+        this.waitTimer = 0;
+    }
+    
+    update() {
+        if (this.damageTimer > 0) this.damageTimer--;
+        if (this.target) {
+            if (this.waitTimer <= 0) {
+                this.animation.increment();
+                let v = this.target.pos.minus(this.pos);
+                if (v.magSquared() > 0) {
+                    v.setLength(1.2);
+                    this.setDirection(v);
+                    this.pos.add(v);
+                    this.ejectFromCollision();
+                    this.positionHitbox();
+                    if (attackNonEnemies(this.hitbox, 1)) {
+                        this.waitTimer = 30;
+                    }
+                    this.resetHitbox();
+                }
+            } else {
+                this.waitTimer--;
+            }
+        } else {
+            if (player.pos.minus(this.pos).mag() < 110 && (player.isMoving() || this.alert > 200)) {
+                this.alert+=5;
+                this.setDirection(player.pos.minus(this.pos));
+                if (this.alert > 120) this.target = player;
+            }
+            if (this.alert > 0) {
+                this.alert--;
+            } else {
+                this.sleepTimer--;
+                if (this.sleepTimer <= 0) {
+                    this.sleepTimer = 60;
+                    entities.push(new SleepZ(this.pos.x + 5, this.pos.y - 5, true));
+                }
+            }
+        }
+    }
+    
+    setDirection(dir) {
+        if (this.direction == (dir.x < 0)) this.hitbox.flipX(0);
+        this.direction = dir.x >= 0;
+    }
+    
+    takeKnockbackHit(knockback, damage) {
+        this.waitTimer = 30;
+        if (!this.target) {
+            this.alert = 300;
+        }
+        super.takeKnockbackHit(knockback, damage);
+    }
+    
+    handleSegment(seg, ejectVector) {
+        if (seg.type == "wall" || seg.type == "slope" || seg.type == "stairEdge") {
+            this.pos.add(ejectVector);
+        }
+    }
+    
+    render(ctx) {
+        if (image.snake) {
+            if (this.damageTimer > 0) {
+                this.damageTimer--;
+                ctx.globalCompositeOperation = "difference";
+            }
+            let img = this.alert <= 0 ? 0 : 1;
+            if (this.target) img = this.animation.getStep() + 1;
+            ctx.drawImage(image.snake, this.direction ? 0 : 12, 9 * img, 12, 9, this.pos.x - 6, this.pos.y - 9, 12,9);
+            ctx.globalCompositeOperation = "source-over";
+            if (DEBUG_SHOW_HITBOX) {
+                this.positionHitbox();
+                this.hitbox.render(ctx);
+                this.resetHitbox();
+            }
+            if (this.health < this.maxHealth) {
+                this.drawHealthBar(-10, ctx);
+            }
+        }
     }
 }

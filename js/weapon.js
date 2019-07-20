@@ -73,7 +73,7 @@ class Sword extends Weapon {
     }
     
     getHitbox() {
-        if (this.timer > 13) {
+        if (this.timer > 10) {
             let theta = this.direction.angleOf();
             let cos = Math.cos(theta);
             let sin = Math.sin(theta);

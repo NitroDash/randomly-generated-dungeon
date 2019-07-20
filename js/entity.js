@@ -90,9 +90,13 @@ class Entity {
     
     isTangible() {return this.tangible;}
     
+    canTransition() {return true;}
+    
     isEnemy() {return false;}
     
     isHurtByEnemy() {return false;}
+    
+    isMoving() {return false;}
     
     isDead() {return this.dead;}
     
@@ -343,6 +347,7 @@ class Player extends Entity {
         this.health = this.maxHealth;
         this.damageTimer = 0;
         this.keys = 0;
+        this.moving = false;
     }
     
     update() {
@@ -372,10 +377,12 @@ class Player extends Entity {
             return;
         }
         let v;
+        this.moving = false;
         if (this.weapon.isActive()) {
             this.weapon.update();
             v = this.weapon.getVelocity();
             if (v) this.pos.add(v);
+            if (v && v.magSquared() > 0) this.moving = true;
             v = this.weapon.getDirection();
             if (v) this.direction = v.copy();
             let box = this.weapon.getHitbox();
@@ -391,6 +398,7 @@ class Player extends Entity {
                 d.setLength(speed);
                 this.direction = d;
                 this.standWalk.increment();
+                this.moving = true;
             } else {
                 this.standWalk.reset();
             }
@@ -454,6 +462,10 @@ class Player extends Entity {
     isHurtByEnemy() {return true;}
     
     isTangible() {return this.tangible && this.damageTimer == 0;}
+    
+    canTransition() {return this.tangible;}
+    
+    isMoving() {return this.moving;}
     
     renderHUD(ctx, width, scale) {
         drawLeftAlignedHealthBar(ctx, 0, 0, Math.ceil(2*scale/TILE_SIZE), this.health, this.maxHealth);

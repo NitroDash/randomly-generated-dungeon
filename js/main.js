@@ -118,7 +118,7 @@ function initFloorAndStartGame() {
 }
 
 function checkRoomTransition() {
-    if (player.isTangible() && !player.hitboxIntersects(roomBox)) {
+    if (player.canTransition() && !player.hitboxIntersects(roomBox)) {
         startRoomTransition(Math.round(player.pos.x/HALF_ROOM_PIXEL_WIDTH)-1,Math.round(player.pos.y/HALF_ROOM_PIXEL_HEIGHT)-1);
     }
 }

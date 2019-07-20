@@ -10,6 +10,7 @@ class Hitbox {
     knockbackVector() {return null;}
     
     translate(x,y) {}
+    flipX(center) {}
     
     render(ctx) {}
 }
@@ -37,6 +38,12 @@ class RectHitbox extends Hitbox {
         let v = new Vector(x,y);
         this.p1.add(v);
         this.p2.add(v);
+    }
+    
+    flipX(center) {
+        let newLeft = center + center - this.p2.x;
+        this.p2.x = center + center - this.p1.x;
+        this.p1.x = newLeft;
     }
     
     getEjected(other) {
@@ -81,6 +88,12 @@ class HitboxCollection extends Hitbox {
     translate(x,y) {
         for (let i = 0; i < this.boxes.length; i++) {
             this.boxes[i].translate(x,y);
+        }
+    }
+    
+    flipX(center) {
+        for (let i = 0; i < this.boxes.length; i++) {
+            this.boxes[i].flipX(center);
         }
     }
     
@@ -162,6 +175,10 @@ class PointHitbox extends Hitbox {
     
     intersectsPoint(other) {
         return this.pos.minus(other.pos).mag() < 0.1;
+    }
+    
+    flipX(center) {
+        this.pos.x = center + center - this.pos.x;
     }
     
     ejectVectorRect(other) {

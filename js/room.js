@@ -101,6 +101,9 @@ class Room {
                         case "chest":
                             entry.thing = new Chest(entry.template.x, entry.template.y, entry.template.contents);
                             break;
+                        case "snake":
+                            entry.thing = new Snake(entry.template.x, entry.template.y);
+                            break;
                     }
                     if (entry.thing) {
                         entities.push(entry.thing);
