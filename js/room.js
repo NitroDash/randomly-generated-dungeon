@@ -18,6 +18,7 @@ class Room {
         this.array = makeRoomArray(template);
         this.entered = false;
         this.entityList = template.entities ? template.entities.map(entry => {return {"template": entry, alive: true}}) : [];
+        this.chestPos = this.makeChestPos(template.chest || {"x":{"align":"center","pos":0},"y":{"align":"center","pos":0}});
     }
     
     openTopDoor() {
@@ -78,8 +79,30 @@ class Room {
         this.entityList.push({template: {type: "thing"}, alive: !entity.isDead(), thing: entity});
     }
     
+    makeChestPos(pos) {
+        let x = pos.x.pos;
+        let y = pos.y.pos;
+        switch (pos.x.align) {
+            case "center":
+                x += HALF_ROOM_PIXEL_WIDTH;
+                break;
+            case "right":
+                x += ROOM_PIXEL_WIDTH;
+                break;
+        }
+        switch (pos.y.align) {
+            case "center":
+                y += HALF_ROOM_PIXEL_HEIGHT;
+                break;
+            case "bottom":
+                y += ROOM_PIXEL_HEIGHT;
+                break;
+        }
+        return new Vector(x,y);
+    }
+    
     addChest(contents) {
-        this.addEntity({template: {type: "chest", x: ROOM_PIXEL_WIDTH/2, y: ROOM_PIXEL_HEIGHT/2, "contents": contents}, alive: true});
+        this.addEntity({template: {type: "chest", x: this.chestPos.x, y: this.chestPos.y, "contents": contents}, alive: true});
     }
     
     load(ctx) {
@@ -530,9 +553,11 @@ class DungeonGraph {
                     for (let i = 0; i <= found.length; i++) {
                         if (i == found.length) {
                             if (found.length < num) found.push({"x":x,"y":y,"score":score});
+                            break;
                         } else if (found[i].score > score) {
                             found.splice(i,0,{"x":x,"y":y,"score":score});
                             if (found.length > num) found.pop();
+                            break;
                         }
                     }
                 }
